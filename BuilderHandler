@@ -1,0 +1,62 @@
+wait(1)
+local selection = script.Parent.Parent.Parent.Parent.Values.Selection
+local insert = game.InsertService
+local structures = require(script.Parent.Parent.Structures)
+local insertIndex = ""
+local selectedGrey = Color3.new(65/255, 65/255, 65/255)
+local grey = Color3.new(75/255, 75/255, 75/255)
+
+for _, button in pairs(script.Parent.List:GetChildren()) do
+	if button:IsA("TextButton") then
+		
+		button.MouseButton1Down:connect(function()
+			insertIndex = button.Name
+			for _, button in pairs(script.Parent.List:GetChildren()) do
+				if button:IsA("TextButton") then
+					button.BackgroundColor3 = grey
+				end
+			end
+			button.BackgroundColor3 = selectedGrey
+		end)
+		
+	end
+end
+
+local debounce = true
+script.Parent.Insert.MouseButton1Down:connect(function()
+	if debounce then
+		debounce = false
+		if insertIndex ~= "" and selection.Value and not selection.Value.HasBuilding.Value then
+			pcall(function()
+				local asset = insert:LoadAsset(structures[insertIndex])
+				wait()
+				local building = asset.Building
+				building.Parent = selection.Value.Parent.Parent.Buildings
+				building.Binding.Value = selection.Value
+				do -- move asset
+					local movePosition = selection.Value.Position + Vector3.new(0,building.PrimaryPart.Size.Y/2+0.2,0)
+					building:SetPrimaryPartCFrame(CFrame.new() + movePosition)
+					selection.Value.HasBuilding.Value = true
+				end
+				selection.Value.BoundStructure.Value = building
+				selection.Value.Parent.Parent.BuildingCount.Value = selection.Value.Parent.Parent.BuildingCount.Value + 1
+				local selectedBuilding = selection.Value.BoundStructure.Value
+				selection.Value = nil
+				selection.Value = selectedBuilding.Binding.Value
+			end)
+		elseif selection.Value and selection.Value.HasBuilding.Value then
+			script.Parent.Insert.Text = "Area Occupied"
+			script.Parent.Insert.BackgroundColor3 = Color3.new(150/255, 0, 0)
+			wait(1)
+			script.Parent.Insert.Text = "Build"
+			script.Parent.Insert.BackgroundColor3 = Color3.new(0, 85/255, 0)
+		else
+			script.Parent.Insert.Text = "Nothing Selected"
+			script.Parent.Insert.BackgroundColor3 = Color3.new(150/255, 0, 0)
+			wait(1)
+			script.Parent.Insert.Text = "Build"
+			script.Parent.Insert.BackgroundColor3 = Color3.new(0, 85/255, 0)
+		end
+		debounce = true
+	end
+end)
